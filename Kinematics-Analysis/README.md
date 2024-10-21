@@ -16,7 +16,7 @@ In the robot simulation model above, each leg of the quadruped robot has three d
 | $L_2$  |            Length of thigh link             |    60     |
 | $L_3$  |             Length of calf link             |    75     |
 
-## 1.2 Forward Kinematics
+## 1.1 Forward Kinematics
 
 Given the parameters:
 
@@ -53,39 +53,143 @@ As shown in the figure above, firstly establish the coordinate of the robot fram
 |          3           |   $L_2$   |       0        |   0   |     $\theta_2$     |
 |          4           |   $L_3$   |       0        |   0   |         0          |
 
-* **$a_{i-1}$** : the length of the joint axes, i.e.  the length of the common vertical line between $z_{i-1}$ and $z_i$
+* **$a_{i-1}$** : the length of the joint axes, i.e.  the length of the common vertical line between $z_{i-1}$ and $z_i$ 
 * **$\alpha_{i-1}$** : the translate angle between two joint coordinates, i.e the angle of rotation from $z_{i−1}$ to $z_{i}$ around $x_{i-1}$ axes
 * $d_i$: the distance between two joint coordinates, i.e.  the distance of the common vertical line between $z_{i-1}$ and $z_i$
-* angle of the joint: the rotation angle from to along.
+* angle of the joint: the rotation angle from old z-axis to new z-axis.
 
 The spatial relationship between two adjacent connecting rod coordinate system{1} and {i-1} is described by the transformations:
-
-![image-20220729143811431](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729143811431.png)
-
+$$
+{}^{i-1}_i T = \text{Rot}(x, \alpha_{i-1}) \cdot \text{Trans}(x, a_{i-1}) \cdot \text{Rot}(x, \alpha_{i-1}) \cdot \text{Trans}(z, d_i) =
+\\
+\begin{bmatrix}
+c\theta_i & -s\theta_i & 0 & a_{i-1} \\
+s\theta_i c\alpha_{i-1} & c\theta_i c\alpha_{i-1} & -s\alpha_{i-1} & -d_i s\alpha_{i-1} \\
+s\theta_i s\alpha_{i-1} & c\theta_i s\alpha_{i-1} & c\alpha_{i-1} & d_i c\alpha_{i-1} \\
+0 & 0 & 0 & 1
+\end{bmatrix}\tag{2-1}
+$$
 then we get:
+$$
+{}^0_1 T =
+\begin{bmatrix}
+c\theta_1 & -s\theta_1 & 0 & 0 \\
+s\theta_1 & c\theta_1 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}\tag{2-2}
+$$
 
-![image-20220729144603046](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729144603046.png)
+$$
+{}^1_2 T =
+\begin{bmatrix}
+c\theta_2 & -s\theta_2 & 0 & 0 \\
+0 & 0 & -1 & -L_1 \\
+s\theta_2 & c\theta_2 & 0 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}\tag{2-3}
+$$
 
-![image-20220729144624309](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729144624309.png)
+$$
+{}^2_3 T =
+\begin{bmatrix}
+c\theta_3 & -s\theta_3 & 0 & L_2 \\
+s\theta_3 & c\theta_3 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}\tag{2-4}
+$$
 
-![image-20220729144653868](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729144653868.png)
+$$
+{}^3_4 T =
+\begin{bmatrix}
+1 & 0 & 0 & L_3 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}\tag{2-5}
+$$
 
-![image-20220729144712769](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729144712769.png)
-
-![image-20220729144736267](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729144736267.png)
+$$
+{}^{B}_0 T =
+\begin{bmatrix}
+0 & 0 & 1 & L/2 \\
+0 & -1 & 0 & W/2 \\
+1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}\tag{2-6}
+$$
 
 Combine these above matrix, we get $^{B}_{4}T$ :
 
-![image-20220729144840491](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729144840491.png)
+$$
+{}^B_4 T = {}^B_0 T \cdot {}^0_1 T \cdot {}^1_2 T \cdot {}^2_3 T \cdot {}^3_4 T =
+\\
+\begin{bmatrix}
+S_{23} & c_{23} & 0 & L/2 + L_2 S_2 - L_3 S_{23} \\
+-S_1 c_{23} & S_1 S_{23} & c_1 & W/2 + L_1 c_1 + L_2 S_1 c_2 - L_3 S_1 c_{23} \\
+c_1 c_{23} & -c_1 S_{23} & S_1 & L_1 S_1 + L_2 c_1 c_2 - L_3 c_1 c_{23} \\
+0 & 0 & 0 & 1
+\end{bmatrix}\tag{2-7}
+$$
+If we break down $^{B}_{4}T$  into: 
+$$
+{}^B_4 T =
+\begin{bmatrix}
+&&& P_x \\
+&R&& P_y \\
+&&& P_z \\
+0 & 0 & 0 & 1
+\end{bmatrix}\tag{2-8}
+$$
 
-![image-20220729144952717](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729144952717.png)
+$$
+R =
+\begin{bmatrix}
+S_{23} & c_{23} & 0 \\
+-S_1 c_{23} & S_1 S_{23} & c_1 \\
+c_1 c_{23} & -c_1 S_{23} & S_1
+\end{bmatrix}\tag{2-9}
+$$
 
-![image-20220729145022103](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729145022103.png)
-
-![image-20220729145047731](https://www.yahboom.com/public/upload/upload-html/1660303584/image-20220729145047731.png)
+$$
+P =
+\begin{bmatrix}
+{}^B P_x \\
+{}^B P_y \\
+{}^B P_z
+\end{bmatrix}
+=
+\begin{bmatrix}
+L/2 + L_2 s_2 - L_3 s_{23} \\
+W/2 + L_1 c_1 + L_2 s_1 c_2 - L_3 s_1 c_{23} \\
+L_1 s_1 + L_2 c_1 c_2 - L_3 c_1 c_{23}
+\end{bmatrix} \tag{2-10}
+$$
 
 In formula (2-8), R represents the posture of the foot end coordinate system relative to the body coordinate system, and the foot end posture is not considered in the plane free gait planning problem, and P represents the position of the foot end in the body coordinate system. Equation (2-10) is the positive kinematics solution of the left front leg of the quadruped robot. If the three joint angles of the leg are known, the position of the foot end relative to the coordinate system can be obtained by bringing it into the equation.   
 
-It is known that the root joint angle range is [−50∘, 90∘], the hip joint angle range is [−90∘, 80∘], and the knee joint angle range is [−60∘, 45∘]. Use the robotics toolbox in matlab to create a single-leg model of a quadruped robot, and traverse each joint angle within a limited range to obtain the foot end workspace, as shown in Figure 2-3.
+## 1.2 Inverse Kinematics
 
-![image-20220729145047732](http://www.yahboom.net/public/upload/upload-html/1692065522/image-20220729145047732.png)
+### 1.2.1 Modeling of single leg inverse kinematics
+
+In the quadruped robot motion control problem, the trajectory planning of the foot end should be carried out first. This requires the inverse kinematics solution, according to the given foot trajectory, to solve the corresponding joint angles, and use it as the input of the steering gear, so that the foot can move  according to the specified trajectory.
+$$
+\theta_1 = \arcsin\left(\frac{L \cdot y - L_1 \cdot z}{y^2 + z^2}\right) \tag{2-11}
+$$
+
+$$
+\theta_3 = \arcsin\left(\frac{x^2 + y^2 + z^2 - L_1^2 - L_2^2 - L_3^2}{2 \cdot L_2 \cdot L_3}\right) \tag{2-12}
+$$
+
+$$
+\theta_2 = \arcsin\left(\frac{L_3 \cdot c_3 \cdot L - (L_3 \cdot s_3 + L_2) \cdot x}{(L_3 \cdot s_3 + L_2)^2 + (L_3 \cdot c_3)^2}\right) \tag{2-13}
+$$
+
+where
+
+$$
+L = \sqrt{y^2 + z^2 - L_1^2} \tag{2-14}
+$$
+According to equations(2-11) to (2-14), if given the coordinates of the foot end, the joint angles corresponding to the left front leg can be solved.
+
